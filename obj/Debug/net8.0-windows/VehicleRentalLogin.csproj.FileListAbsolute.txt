@@ -1,0 +1,14 @@
+C:\Users\Admin\Desktop\VehicleRentalLogin\bin\Debug\net8.0-windows\VehicleRentalLogin.exe
+C:\Users\Admin\Desktop\VehicleRentalLogin\bin\Debug\net8.0-windows\VehicleRentalLogin.deps.json
+C:\Users\Admin\Desktop\VehicleRentalLogin\bin\Debug\net8.0-windows\VehicleRentalLogin.runtimeconfig.json
+C:\Users\Admin\Desktop\VehicleRentalLogin\bin\Debug\net8.0-windows\VehicleRentalLogin.dll
+C:\Users\Admin\Desktop\VehicleRentalLogin\bin\Debug\net8.0-windows\VehicleRentalLogin.pdb
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfoInputs.cache
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfo.cs
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.dll
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\refint\VehicleRentalLogin.dll
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.pdb
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.genruntimeconfig.cache
+C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\ref\VehicleRentalLogin.dll
