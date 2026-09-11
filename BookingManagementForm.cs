@@ -540,7 +540,9 @@ namespace VehicleRentalLogin
                     dialog.VehicleName,
                     dialog.FromDate,
                     dialog.ToDate,
-                    "Pending"
+                    "Pending",
+                    dialog.ContactNumber,
+                    dialog.Address
                 );
 
                 if (ok)

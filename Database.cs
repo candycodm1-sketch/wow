@@ -451,7 +451,9 @@ private static void SeedBookings(MySqlConnection conn)
             string vehicleName,
             string fromDate,
             string toDate,
-            string status = "Pending")
+            string status = "Pending",
+            string contactNumber = "",
+            string address = "")
         {
             try
             {
@@ -479,6 +481,9 @@ private static void SeedBookings(MySqlConnection conn)
                 cmd.Parameters.AddWithValue("@status", status);
                 cmd.Parameters.AddWithValue("@amount", amount);
                 cmd.ExecuteNonQuery();
+
+                // Auto-add customer if they don't already exist
+                AddCustomerIfNotExists(customerName, contactNumber, address);
 
                 IsAvailable = true;
                 return (true, "Booking added successfully.");
@@ -517,6 +522,52 @@ private static void SeedBookings(MySqlConnection conn)
                 LastErrorDetail = ex.Message;
                 LastError = ConnectionFailureMessage();
                 return (false, LastError);
+            }
+        }
+
+        /// <summary>
+        /// Automatically adds a customer if a customer with the same name doesn't already exist.
+        /// Used when creating a booking to ensure the customer is in the Customers tab.
+        /// </summary>
+        public static void AddCustomerIfNotExists(string customerName, string contactNumber = "", string address = "")
+        {
+            try
+            {
+                using MySqlConnection conn = new MySqlConnection(ConnectionString);
+                conn.Open();
+
+                // Check if customer with this name already exists (case-insensitive)
+                using MySqlCommand checkCmd = new MySqlCommand(
+                    "SELECT customer_id FROM customers WHERE name = @name LIMIT 1", conn);
+                checkCmd.Parameters.AddWithValue("@name", customerName);
+                object? existing = checkCmd.ExecuteScalar();
+
+                if (existing != null)
+                    return; // Customer already exists, do nothing
+
+                // Generate next sequential customer ID
+                using MySqlCommand maxCmd = new MySqlCommand(
+                    "SELECT MAX(CAST(SUBSTRING(customer_id, 5) AS UNSIGNED)) FROM customers", conn);
+                object? maxResult = maxCmd.ExecuteScalar();
+                int nextNum = (maxResult != null && maxResult != DBNull.Value)
+                    ? Convert.ToInt32(maxResult) + 1
+                    : 1001;
+                string customerId = $"CUS-{nextNum}";
+
+                // Insert the new customer
+                using MySqlCommand insertCmd = new MySqlCommand(
+                    "INSERT INTO customers (customer_id, name, contact_number, address) " +
+                    "VALUES (@id, @name, @contact, @address)", conn);
+                insertCmd.Parameters.AddWithValue("@id", customerId);
+                insertCmd.Parameters.AddWithValue("@name", customerName);
+                insertCmd.Parameters.AddWithValue("@contact", string.IsNullOrWhiteSpace(contactNumber) ? "N/A" : contactNumber);
+                insertCmd.Parameters.AddWithValue("@address", string.IsNullOrWhiteSpace(address) ? "N/A" : address);
+                insertCmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Silently ignore errors — the booking was already created successfully.
+                // We don't want a customer-creation failure to block the booking.
             }
         }
 // ------------------------------------------------------ customers

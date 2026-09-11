@@ -8,12 +8,16 @@ namespace VehicleRentalLogin
     {
         private TextBox txtBookingId = null!;
         private TextBox txtCustomerName = null!;
+        private TextBox txtContactNumber = null!;
+        private TextBox txtAddress = null!;
         private TextBox txtVehicleName = null!;
         private DateTimePicker dtpFrom = null!;
         private DateTimePicker dtpTo = null!;
 
         public string BookingId => txtBookingId.Text.Trim();
         public string CustomerName => txtCustomerName.Text.Trim();
+        public string ContactNumber => txtContactNumber.Text.Trim();
+        public string Address => txtAddress.Text.Trim();
         public string VehicleName => txtVehicleName.Text.Trim();
         public string FromDate => dtpFrom.Value.ToString("yyyy-MM-dd");
         public string ToDate => dtpTo.Value.ToString("yyyy-MM-dd");
@@ -26,7 +30,7 @@ namespace VehicleRentalLogin
         private void InitializeForm()
         {
             this.Text = "Add Booking";
-            this.Size = new Size(400, 420);
+            this.Size = new Size(400, 560);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -54,6 +58,18 @@ namespace VehicleRentalLogin
             this.Controls.Add(lblCustomer);
             txtCustomerName = new TextBox { Location = new Point(25, y + 22), Size = new Size(330, 26), BorderStyle = BorderStyle.FixedSingle };
             this.Controls.Add(txtCustomerName);
+            y += 60;
+
+            Label lblContact = new Label { Text = "Contact Number", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
+            this.Controls.Add(lblContact);
+            txtContactNumber = new TextBox { Location = new Point(25, y + 22), Size = new Size(330, 26), BorderStyle = BorderStyle.FixedSingle };
+            this.Controls.Add(txtContactNumber);
+            y += 60;
+
+            Label lblAddress = new Label { Text = "Address", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
+            this.Controls.Add(lblAddress);
+            txtAddress = new TextBox { Location = new Point(25, y + 22), Size = new Size(330, 26), BorderStyle = BorderStyle.FixedSingle };
+            this.Controls.Add(txtAddress);
             y += 60;
 
             Label lblVehicle = new Label { Text = "Vehicle", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
