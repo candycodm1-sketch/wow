@@ -112,11 +112,16 @@ namespace VehicleRentalLogin
             };
             mainContent.Controls.Add(lblAdmin);
 
-            // Stat cards
-            AddStatCard(mainContent, "Total Vehicles", "15", Color.FromArgb(60, 90, 220), 30, 80);
-            AddStatCard(mainContent, "Available Vehicles", "10", Color.FromArgb(40, 170, 90), 260, 80);
-            AddStatCard(mainContent, "Active Rentals", "5", Color.FromArgb(230, 140, 30), 490, 80);
-            AddStatCard(mainContent, "Total Customers", "12", Color.Black, 720, 80);
+            // Stat cards (live counts from the database)
+            int totalVehicles = Database.CountVehicles();
+            int availableVehicles = Database.CountAvailableVehicles();
+            int activeRentals = Database.CountActiveBookings();
+            int totalCustomers = Database.CountCustomers();
+
+            AddStatCard(mainContent, "Total Vehicles", totalVehicles.ToString(), Color.FromArgb(60, 90, 220), 30, 80);
+            AddStatCard(mainContent, "Available Vehicles", availableVehicles.ToString(), Color.FromArgb(40, 170, 90), 260, 80);
+            AddStatCard(mainContent, "Active Rentals", activeRentals.ToString(), Color.FromArgb(230, 140, 30), 490, 80);
+            AddStatCard(mainContent, "Total Customers", totalCustomers.ToString(), Color.Black, 720, 80);
 
             // Recent bookings panel
             Panel bookingsPanel = new Panel
@@ -170,10 +175,19 @@ namespace VehicleRentalLogin
             bookingsList.Columns.Add("Status", 150);
             bookingsPanel.Controls.Add(bookingsList);
 
-            // Sample rows — replace with real data from your database.
-            bookingsList.Items.Add(new ListViewItem(new[] { "BK-1001", "Juan Dela Cruz", "Toyota Vios", "2026-08-10", "2026-08-12", "Completed" }));
-            bookingsList.Items.Add(new ListViewItem(new[] { "BK-1002", "Maria Santos", "Honda CR-V", "2026-08-11", "2026-08-15", "Active" }));
-            bookingsList.Items.Add(new ListViewItem(new[] { "BK-1003", "Pedro Reyes", "Ford Ranger", "2026-08-13", "2026-08-14", "Pending" }));
+            // Recent bookings from the database.
+            foreach (BookingRecord booking in Database.GetBookings(3))
+            {
+                bookingsList.Items.Add(new ListViewItem(new[]
+                {
+                    booking.BookingId,
+                    booking.CustomerName,
+                    booking.VehicleName,
+                    booking.FromDate,
+                    booking.ToDate,
+                    booking.Status
+                }));
+            }
         }
 
         private void AddStatCard(Panel parent, string title, string value, Color accentColor, int x, int y)
@@ -240,9 +254,12 @@ namespace VehicleRentalLogin
                     this.Close();
                     break;
                 case "Customers":
+                    new CustomerManagementForm().Show();
+                    this.Close();
+                    break;
                 case "Reports":
-                    MessageBox.Show($"{target} page is not built yet.", "Coming Soon",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    new ReportsForm().Show();
+                    this.Close();
                     break;
             }
         }

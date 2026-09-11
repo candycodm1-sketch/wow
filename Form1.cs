@@ -17,9 +17,8 @@ namespace VehicleRentalLogin
         private const string EmailPlaceholder = "Enter your Email";
         private const string PasswordPlaceholder = "Enter your Password";
 
-        // Demo credentials — replace with real authentication (DB/API) later.
-        private const string DemoEmail = "admin@drivehub.com";
-        private const string DemoPassword = "admin123";
+        // Demo constants removed — authentication now runs against the MySQL users table
+        // (admin@drivehub.com / admin123 is seeded on first launch by Database.EnsureDatabase).
 
         public Form1()
         {
@@ -230,8 +229,10 @@ namespace VehicleRentalLogin
                 return;
             }
 
-            // TODO: Replace with real authentication (database/API call).
-            if (email.Equals(DemoEmail, StringComparison.OrdinalIgnoreCase) && password == DemoPassword)
+            // Authenticate against the users table (admin@drivehub.com / admin123 is seeded).
+            (bool ok, string message) = Database.ValidateLogin(email, password);
+
+            if (ok)
             {
                 DashboardForm dashboard = new DashboardForm();
                 dashboard.Show();
@@ -239,7 +240,7 @@ namespace VehicleRentalLogin
             }
             else
             {
-                MessageBox.Show("Invalid email or password.\n\n(Demo login: admin@drivehub.com / admin123)",
+                MessageBox.Show(message,
                     "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

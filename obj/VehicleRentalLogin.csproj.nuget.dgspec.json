@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Admin\\Desktop\\VehicleRentalLogin\\VehicleRentalLogin.csproj": {}
+    "C:\\Users\\RENE\\Downloads\\clone ng github\\wow\\VehicleRentalLogin.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Admin\\Desktop\\VehicleRentalLogin\\VehicleRentalLogin.csproj": {
+    "C:\\Users\\RENE\\Downloads\\clone ng github\\wow\\VehicleRentalLogin.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Admin\\Desktop\\VehicleRentalLogin\\VehicleRentalLogin.csproj",
+        "projectUniqueName": "C:\\Users\\RENE\\Downloads\\clone ng github\\wow\\VehicleRentalLogin.csproj",
         "projectName": "VehicleRentalLogin",
-        "projectPath": "C:\\Users\\Admin\\Desktop\\VehicleRentalLogin\\VehicleRentalLogin.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Admin\\Desktop\\VehicleRentalLogin\\obj\\",
+        "projectPath": "C:\\Users\\RENE\\Downloads\\clone ng github\\wow\\VehicleRentalLogin.csproj",
+        "packagesPath": "C:\\Users\\RENE\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\RENE\\Downloads\\clone ng github\\wow\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\RENE\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -50,6 +50,12 @@
       "frameworks": {
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
+          "dependencies": {
+            "MySqlConnector": {
+              "target": "Package",
+              "version": "[2.6.2, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -69,7 +75,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.318/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

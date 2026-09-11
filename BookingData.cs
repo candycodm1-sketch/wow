@@ -14,95 +14,45 @@ namespace VehicleRentalLogin
         public decimal Amount { get; set; }
     }
 
+    /// <summary>
+    /// Lightweight accessor for the MySQL-backed booking store (see Database.cs).
+    /// The management forms talk to Database directly; this facade keeps a single
+    /// in-memory snapshot (Bookings) that the Reports form can bind to.
+    /// </summary>
     public static class BookingData
     {
+        /// <summary>The latest bookings snapshot loaded from the database.</summary>
         public static List<BookingRecord> Bookings { get; } =
             new List<BookingRecord>();
 
-        public static void LoadSamples()
+        /// <summary>Reloads all bookings from the database into <see cref="Bookings"/>.</summary>
+        public static void Refresh()
         {
-            if (Bookings.Count > 0)
-                return;
-
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = "BK-1001",
-                CustomerName = "Juan Dela Cruz",
-                VehicleName = "Toyota Vios",
-                FromDate = "2026-08-18",
-                ToDate = "2026-08-19",
-                Status = "Completed",
-                Amount = 2000
-            });
-
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = "BK-1002",
-                CustomerName = "Maria Santos",
-                VehicleName = "Toyota Fortuner",
-                FromDate = "2026-08-18",
-                ToDate = "2026-08-20",
-                Status = "Completed",
-                Amount = 4500
-            });
-
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = "BK-1003",
-                CustomerName = "Pedro Reyes",
-                VehicleName = "Mitsubishi Xpander",
-                FromDate = "2026-08-19",
-                ToDate = "2026-08-21",
-                Status = "Active",
-                Amount = 3200
-            });
-
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = "BK-1004",
-                CustomerName = "Ana Lopez",
-                VehicleName = "Honda Civic",
-                FromDate = "2026-08-19",
-                ToDate = "2026-08-20",
-                Status = "Completed",
-                Amount = 2800
-            });
-
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = "BK-1005",
-                CustomerName = "Carlos Tan",
-                VehicleName = "Toyota Vios",
-                FromDate = "2026-08-20",
-                ToDate = "2026-08-21",
-                Status = "Pending",
-                Amount = 2500
-            });
+            Bookings.Clear();
+            Bookings.AddRange(Database.GetBookings());
         }
 
-        public static void AddBooking(
+        public static (bool Ok, string Message) AddBooking(
             string bookingId,
             string customerName,
             string vehicleName,
             string fromDate,
             string toDate,
-            string status)
+            string status = "Pending")
         {
-            decimal amount = CalculateAmount(
-                fromDate,
-                toDate
-            );
+            (bool Ok, string Message) result =
+                Database.AddBooking(
+                    bookingId,
+                    customerName,
+                    vehicleName,
+                    fromDate,
+                    toDate,
+                    status);
 
-            Bookings.Add(new BookingRecord
-            {
-                BookingId = bookingId,
-                CustomerName = customerName,
-                VehicleName = vehicleName,
-                FromDate = fromDate,
-                ToDate = toDate,
-                Status = status,
-                Amount = amount
-            });
+            if (result.Ok)
+                Refresh();
+
+            return result;
         }
 
         public static decimal CalculateAmount(

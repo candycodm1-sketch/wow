@@ -209,7 +209,7 @@ namespace VehicleRentalLogin
             customerList.MouseClick += CustomerList_MouseClick;
             customerList.MouseMove += CustomerList_MouseMove;
 
-            LoadSampleCustomers();
+            RefreshCustomers();
 
             Panel pagination = new Panel
             {
@@ -269,44 +269,19 @@ namespace VehicleRentalLogin
             pagination.Controls.Add(btnNext);
         }
 
-        private void LoadSampleCustomers()
+        private void RefreshCustomers()
         {
             customerList.Items.Clear();
 
-            AddCustomerRow(
-                "CUS-1001",
-                "Juan Dela Cruz",
-                "09171234567",
-                "Santa Rosa, Laguna"
-            );
-
-            AddCustomerRow(
-                "CUS-1002",
-                "Maria Santos",
-                "09181234567",
-                "Biñan, Laguna"
-            );
-
-            AddCustomerRow(
-                "CUS-1003",
-                "Pedro Reyes",
-                "09201234567",
-                "Calamba, Laguna"
-            );
-
-            AddCustomerRow(
-                "CUS-1004",
-                "Ana Lopez",
-                "09221234567",
-                "Cabuyao, Laguna"
-            );
-
-            AddCustomerRow(
-                "CUS-1005",
-                "Carlos Tan",
-                "09351234567",
-                "Tagaytay, Cavite"
-            );
+            foreach (CustomerRecord customer in Database.GetCustomers())
+            {
+                AddCustomerRow(
+                    customer.CustomerId,
+                    customer.CustomerName,
+                    customer.ContactNumber,
+                    customer.Address
+                );
+            }
         }
 
         private void AddCustomerRow(
@@ -413,14 +388,30 @@ namespace VehicleRentalLogin
 
             if (confirm == DialogResult.Yes)
             {
-                customerList.Items.Remove(row);
-
-                MessageBox.Show(
-                    "Customer deleted successfully.",
-                    "Customer Deleted",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
+                (bool ok, string message) = Database.DeleteCustomer(
+                    row.SubItems[0].Text
                 );
+
+                if (ok)
+                {
+                    RefreshCustomers();
+
+                    MessageBox.Show(
+                        "Customer deleted successfully.",
+                        "Customer Deleted",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                }
+                else
+                {
+                    MessageBox.Show(
+                        message,
+                        "Delete Customer Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
+                }
             }
         }
 
@@ -463,12 +454,33 @@ namespace VehicleRentalLogin
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                AddCustomerRow(
+                (bool ok, string message) = Database.AddCustomer(
                     dialog.CustomerId,
                     dialog.CustomerName,
                     dialog.ContactNumber,
                     dialog.Address
                 );
+
+                if (ok)
+                {
+                    RefreshCustomers();
+
+                    MessageBox.Show(
+                        "Customer added successfully.",
+                        "Customer Added",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                }
+                else
+                {
+                    MessageBox.Show(
+                        message,
+                        "Add Customer Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
+                }
             }
         }
 

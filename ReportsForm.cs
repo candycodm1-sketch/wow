@@ -17,7 +17,7 @@ namespace VehicleRentalLogin
 
         public ReportsForm()
         {
-            BookingData.LoadSamples();
+            BookingData.Refresh();
             InitializeForm();
             RefreshReports();
         }
@@ -332,7 +332,7 @@ namespace VehicleRentalLogin
 
         private void RefreshReports()
         {
-            BookingData.LoadSamples();
+            BookingData.Refresh();
 
             decimal income =
                 BookingData.Bookings

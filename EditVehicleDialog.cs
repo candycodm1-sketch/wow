@@ -26,8 +26,14 @@ namespace VehicleRentalLogin
             txtVehicleId.Text = vehicleId;
             txtModel.Text = model;
             cmbType.Text = type;
-            // Strip "₱" and "/day" from the stored rate so only the number shows in the box.
-            txtDailyRate.Text = dailyRate.Replace("₱", "").Replace("/day", "").Trim();
+            // Strip the peso sign, separators, and "/day" so only the number shows in the box.
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            foreach (char c in dailyRate)
+            {
+                if (char.IsDigit(c) || c == '.')
+                    sb.Append(c);
+            }
+            txtDailyRate.Text = sb.ToString();
             cmbStatus.Text = status;
         }
 

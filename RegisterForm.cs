@@ -221,7 +221,15 @@ namespace VehicleRentalLogin
                 return;
             }
 
-            // TODO: Save the new account to a database instead of just showing a message.
+            (bool ok, string message) = Database.RegisterUser(fullName, email, password);
+
+            if (!ok)
+            {
+                MessageBox.Show(message, "Registration Failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             MessageBox.Show($"Account created for {fullName}!\nYou can now log in.", "Registration Successful",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
