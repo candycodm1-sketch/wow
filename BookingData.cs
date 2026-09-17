@@ -10,6 +10,8 @@ namespace VehicleRentalLogin
         public string VehicleName { get; set; } = "";
         public string FromDate { get; set; } = "";
         public string ToDate { get; set; } = "";
+        public string CreatedAt { get; set; } = "";
+        public string ProcessedBy { get; set; } = "";
         public string Status { get; set; } = "";
         public decimal Amount { get; set; }
     }
@@ -38,7 +40,11 @@ namespace VehicleRentalLogin
             string vehicleName,
             string fromDate,
             string toDate,
-            string status = "Pending")
+            string status = "Pending",
+            string contactNumber = "",
+            string address = "",
+            string email = "",
+            string processedBy = "")
         {
             (bool Ok, string Message) result =
                 Database.AddBooking(
@@ -47,7 +53,11 @@ namespace VehicleRentalLogin
                     vehicleName,
                     fromDate,
                     toDate,
-                    status);
+                    status,
+                    contactNumber,
+                    address,
+                    email,
+                    processedBy);
 
             if (result.Ok)
                 Refresh();

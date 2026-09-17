@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace VehicleRentalLogin
@@ -13,12 +14,13 @@ namespace VehicleRentalLogin
         private LinkLabel lnkForgotPassword = null!;
         private LinkLabel lnkRegister = null!;
 
-        // Placeholder tracking
         private const string EmailPlaceholder = "Enter your Email";
         private const string PasswordPlaceholder = "Enter your Password";
 
-        // Demo constants removed — authentication now runs against the MySQL users table
-        // (admin@drivehub.com / admin123 is seeded on first launch by Database.EnsureDatabase).
+        private readonly Color PrimaryBlue = Color.FromArgb(48, 73, 181);
+        private readonly Color DarkText = Color.FromArgb(17, 17, 17);
+        private readonly Color SecondaryText = Color.FromArgb(110, 110, 110);
+        private readonly Color BorderColor = Color.FromArgb(190, 190, 190);
 
         public Form1()
         {
@@ -27,238 +29,563 @@ namespace VehicleRentalLogin
 
         private void InitializeForm()
         {
-            this.Text = "Vehicle Rental & Booking System - Login";
-            this.Size = new Size(900, 500);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.BackColor = Color.White;
+            Text = "DriveHub - Vehicle Rental System";
+            ClientSize = new Size(1100, 680);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = true;
+            BackColor = Color.White;
+            Font = new Font("Segoe UI", 10F);
 
-            // ---------- LEFT PANEL ----------
+            // =========================
+            // LEFT SIDE - FULL IMAGE
+            // =========================
+
             Panel leftPanel = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 380,
-                BackColor = Color.FromArgb(219, 229, 247)
+                Width = 520,
+                BackColor = Color.FromArgb(241, 246, 255)
             };
-            this.Controls.Add(leftPanel);
 
-            Label lblBrandTitle = new Label
+            Controls.Add(leftPanel);
+
+            PictureBox vehicleImage = new PictureBox
             {
-                Text = "Vehicle Rental\nBooking System",
-                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 30, 60),
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(340, 90),
-                Location = new Point(20, 190)
+                Dock = DockStyle.Fill,
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                BackColor = Color.FromArgb(241, 246, 255)
             };
-            leftPanel.Controls.Add(lblBrandTitle);
 
-            Label lblBrandSubtitle = new Label
+            string vehicleArtwork = FindAssetByPrefix(
+                "vehicle rental & booking system for"
+            );
+
+            if (!string.IsNullOrEmpty(vehicleArtwork))
             {
-                Text = "Easy booking, reliable vehicles,\nbetter journey.",
-                Font = new Font("Segoe UI", 10F),
-                ForeColor = Color.FromArgb(90, 90, 110),
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(340, 50),
-                Location = new Point(20, 290)
-            };
-            leftPanel.Controls.Add(lblBrandSubtitle);
+                using (Image original = Image.FromFile(vehicleArtwork))
+                {
+                    vehicleImage.Image = new Bitmap(original);
+                }
+            }
 
-            // ---------- RIGHT PANEL (form) ----------
+            leftPanel.Controls.Add(vehicleImage);
+
+            // =========================
+            // RIGHT SIDE
+            // =========================
+
             Panel rightPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.White,
-                Padding = new Padding(60, 40, 60, 40)
+                BackColor = Color.White
             };
-            this.Controls.Add(rightPanel);
+
+            Controls.Add(rightPanel);
             rightPanel.BringToFront();
+
+            Panel loginContainer = new Panel
+            {
+                Size = new Size(430, 500),
+                Location = new Point(75, 80),
+                BackColor = Color.White
+            };
+
+            rightPanel.Controls.Add(loginContainer);
+
+            // =========================
+            // WELCOME
+            // =========================
 
             Label lblWelcome = new Label
             {
                 Text = "Welcome Back!",
-                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 25F, FontStyle.Bold),
                 ForeColor = Color.Black,
                 AutoSize = true,
-                Location = new Point(60, 40)
+                Location = new Point(0, 0)
             };
-            rightPanel.Controls.Add(lblWelcome);
+
+            loginContainer.Controls.Add(lblWelcome);
 
             Label lblSubtitle = new Label
             {
                 Text = "Please login to your account",
-                Font = new Font("Segoe UI", 9.5F),
-                ForeColor = Color.Gray,
+                Font = new Font("Segoe UI", 11F),
+                ForeColor = SecondaryText,
                 AutoSize = true,
-                Location = new Point(60, 75)
+                Location = new Point(2, 42)
             };
-            rightPanel.Controls.Add(lblSubtitle);
 
-            // Email
+            loginContainer.Controls.Add(lblSubtitle);
+
+            // =========================
+            // EMAIL LABEL
+            // =========================
+
             Label lblEmail = new Label
             {
                 Text = "Email",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                ForeColor = DarkText,
                 AutoSize = true,
-                Location = new Point(60, 120)
+                Location = new Point(2, 88)
             };
-            rightPanel.Controls.Add(lblEmail);
+
+            loginContainer.Controls.Add(lblEmail);
+
+            // =========================
+            // EMAIL INPUT
+            // =========================
+
+            Panel emailPanel = CreateInputPanel();
+
+            emailPanel.Location = new Point(0, 116);
+            emailPanel.Size = new Size(430, 55);
+
+            PictureBox emailIcon = CreateIcon("email.png");
+
+            emailIcon.Location = new Point(12, 15);
+            emailIcon.Size = new Size(24, 24);
+
+            emailPanel.Controls.Add(emailIcon);
 
             txtEmail = new TextBox
             {
                 Text = EmailPlaceholder,
                 ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 10F),
-                Location = new Point(60, 145),
-                Size = new Size(400, 28),
-                BorderStyle = BorderStyle.FixedSingle
+                Font = new Font("Segoe UI", 11F),
+                BorderStyle = BorderStyle.None,
+                Location = new Point(48, 15),
+                Size = new Size(365, 25)
             };
-            txtEmail.Enter += (s, e) => ClearPlaceholder(txtEmail, EmailPlaceholder);
-            txtEmail.Leave += (s, e) => SetPlaceholder(txtEmail, EmailPlaceholder);
-            rightPanel.Controls.Add(txtEmail);
 
-            // Password
+            txtEmail.Enter += (s, e) =>
+            {
+                if (txtEmail.Text == EmailPlaceholder)
+                {
+                    txtEmail.Text = "";
+                    txtEmail.ForeColor = Color.Black;
+                }
+            };
+
+            txtEmail.Leave += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtEmail.Text))
+                {
+                    txtEmail.Text = EmailPlaceholder;
+                    txtEmail.ForeColor = Color.Gray;
+                }
+            };
+
+            emailPanel.Controls.Add(txtEmail);
+            loginContainer.Controls.Add(emailPanel);
+
+            // =========================
+            // PASSWORD LABEL
+            // =========================
+
             Label lblPassword = new Label
             {
                 Text = "Password",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                ForeColor = DarkText,
                 AutoSize = true,
-                Location = new Point(60, 190)
+                Location = new Point(2, 188)
             };
-            rightPanel.Controls.Add(lblPassword);
+
+            loginContainer.Controls.Add(lblPassword);
+
+            // =========================
+            // PASSWORD INPUT
+            // =========================
+
+            Panel passwordPanel = CreateInputPanel();
+
+            passwordPanel.Location = new Point(0, 216);
+            passwordPanel.Size = new Size(430, 55);
+
+            PictureBox passwordIcon = CreateIcon("password.png");
+
+            passwordIcon.Location = new Point(12, 15);
+            passwordIcon.Size = new Size(24, 24);
+
+            passwordPanel.Controls.Add(passwordIcon);
 
             txtPassword = new TextBox
             {
                 Text = PasswordPlaceholder,
                 ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 10F),
-                Location = new Point(60, 215),
-                Size = new Size(400, 28),
-                BorderStyle = BorderStyle.FixedSingle
+                Font = new Font("Segoe UI", 11F),
+                BorderStyle = BorderStyle.None,
+                Location = new Point(48, 15),
+                Size = new Size(320, 25)
             };
-            txtPassword.Enter += (s, e) => ClearPlaceholder(txtPassword, PasswordPlaceholder, isPassword: true);
-            txtPassword.Leave += (s, e) => SetPlaceholder(txtPassword, PasswordPlaceholder, isPassword: true);
-            rightPanel.Controls.Add(txtPassword);
 
-            // Remember me + Forgot password
+            txtPassword.Enter += (s, e) =>
+            {
+                if (txtPassword.Text == PasswordPlaceholder)
+                {
+                    txtPassword.Text = "";
+                    txtPassword.ForeColor = Color.Black;
+                    txtPassword.UseSystemPasswordChar = true;
+                }
+            };
+
+            txtPassword.Leave += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtPassword.Text))
+                {
+                    txtPassword.UseSystemPasswordChar = false;
+                    txtPassword.Text = PasswordPlaceholder;
+                    txtPassword.ForeColor = Color.Gray;
+                }
+            };
+
+            passwordPanel.Controls.Add(txtPassword);
+
+            // =========================
+            // SHOW PASSWORD
+            // =========================
+
+            PictureBox showPasswordIcon = CreateIcon("showpassword.png");
+
+            showPasswordIcon.Location = new Point(390, 15);
+            showPasswordIcon.Size = new Size(24, 24);
+            showPasswordIcon.Cursor = Cursors.Hand;
+
+            showPasswordIcon.Click += (s, e) =>
+            {
+                if (txtPassword.Text != PasswordPlaceholder)
+                {
+                    txtPassword.UseSystemPasswordChar =
+                        !txtPassword.UseSystemPasswordChar;
+                }
+            };
+
+            passwordPanel.Controls.Add(showPasswordIcon);
+
+            loginContainer.Controls.Add(passwordPanel);
+
+            // =========================
+            // REMEMBER ME
+            // =========================
+
             chkRemember = new CheckBox
             {
                 Text = "Remember me",
-                Font = new Font("Segoe UI", 9F),
-                Checked = true,
+                Font = new Font("Segoe UI", 10F),
+                ForeColor = SecondaryText,
                 AutoSize = true,
-                Location = new Point(60, 260)
+                Location = new Point(0, 288),
+                Cursor = Cursors.Hand
             };
-            rightPanel.Controls.Add(chkRemember);
+
+            loginContainer.Controls.Add(chkRemember);
+
+            // =========================
+            // FORGOT PASSWORD
+            // =========================
 
             lnkForgotPassword = new LinkLabel
             {
                 Text = "Forgot Password?",
-                Font = new Font("Segoe UI", 9F),
+                Font = new Font("Segoe UI", 10F),
                 AutoSize = true,
-                LinkColor = Color.FromArgb(99, 60, 220),
-                Location = new Point(340, 260)
+                LinkColor = PrimaryBlue,
+                ActiveLinkColor = PrimaryBlue,
+                VisitedLinkColor = PrimaryBlue,
+                Location = new Point(303, 289),
+                Cursor = Cursors.Hand
             };
-            lnkForgotPassword.LinkClicked += LnkForgotPassword_LinkClicked;
-            rightPanel.Controls.Add(lnkForgotPassword);
 
-            // Login button
+            lnkForgotPassword.LinkClicked += LnkForgotPassword_LinkClicked;
+
+            loginContainer.Controls.Add(lnkForgotPassword);
+
+            // =========================
+            // LOGIN BUTTON
+            // =========================
+
             btnLogin = new Button
             {
                 Text = "Login",
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 ForeColor = Color.White,
-                BackColor = Color.FromArgb(99, 60, 220),
+                BackColor = PrimaryBlue,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(60, 300),
-                Size = new Size(400, 40),
+                Size = new Size(430, 53),
+                Location = new Point(0, 330),
                 Cursor = Cursors.Hand
             };
-            btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.Click += BtnLogin_Click;
-            rightPanel.Controls.Add(btnLogin);
 
-            // Register link
+            btnLogin.FlatAppearance.BorderSize = 0;
+
+            btnLogin.MouseEnter += (s, e) =>
+            {
+                btnLogin.BackColor = Color.FromArgb(39, 61, 155);
+            };
+
+            btnLogin.MouseLeave += (s, e) =>
+            {
+                btnLogin.BackColor = PrimaryBlue;
+            };
+
+            btnLogin.Click += BtnLogin_Click;
+
+            loginContainer.Controls.Add(btnLogin);
+
+            // =========================
+            // REGISTER
+            // =========================
+
             lnkRegister = new LinkLabel
             {
                 Text = "Don't have an account? Register here",
-                Font = new Font("Segoe UI", 9F),
+                Font = new Font("Segoe UI", 10F),
                 AutoSize = true,
-                LinkColor = Color.FromArgb(99, 60, 220),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(140, 355)
+                LinkColor = PrimaryBlue,
+                ActiveLinkColor = PrimaryBlue,
+                VisitedLinkColor = PrimaryBlue,
+                Location = new Point(108, 405),
+                Cursor = Cursors.Hand
             };
+
             lnkRegister.LinkClicked += LnkRegister_LinkClicked;
-            rightPanel.Controls.Add(lnkRegister);
 
-            this.AcceptButton = btnLogin;
+            loginContainer.Controls.Add(lnkRegister);
+
+            AcceptButton = btnLogin;
         }
 
-        private void ClearPlaceholder(TextBox box, string placeholder, bool isPassword = false)
+        // =========================
+        // INPUT PANEL
+        // =========================
+
+        private Panel CreateInputPanel()
         {
-            if (box.Text == placeholder)
+            Panel panel = new Panel
             {
-                box.Text = "";
-                box.ForeColor = Color.Black;
-                if (isPassword) box.UseSystemPasswordChar = true;
-            }
+                BackColor = Color.White
+            };
+
+            panel.Paint += (s, e) =>
+            {
+                using Pen pen = new Pen(BorderColor, 1);
+
+                e.Graphics.DrawRectangle(
+                    pen,
+                    0,
+                    0,
+                    panel.Width - 1,
+                    panel.Height - 1
+                );
+            };
+
+            return panel;
         }
 
-        private void SetPlaceholder(TextBox box, string placeholder, bool isPassword = false)
+        // =========================
+        // LOAD ICON
+        // =========================
+
+        private PictureBox CreateIcon(string fileName)
         {
-            if (string.IsNullOrWhiteSpace(box.Text))
+            PictureBox pictureBox = new PictureBox
             {
-                if (isPassword) box.UseSystemPasswordChar = false;
-                box.Text = placeholder;
-                box.ForeColor = Color.Gray;
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+
+            string path = FindAsset(fileName);
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                using (Image original = Image.FromFile(path))
+                {
+                    pictureBox.Image = new Bitmap(original);
+                }
             }
+
+            return pictureBox;
         }
+
+        // =========================
+        // FIND ASSET
+        // =========================
+
+        private string FindAsset(string fileName)
+        {
+            string current = Application.StartupPath;
+
+            for (int i = 0; i < 6; i++)
+            {
+                string assetsPath = Path.Combine(
+                    current,
+                    "Assets",
+                    fileName
+                );
+
+                if (File.Exists(assetsPath))
+                    return assetsPath;
+
+                DirectoryInfo? parent = Directory.GetParent(current);
+
+                if (parent == null)
+                    break;
+
+                current = parent.FullName;
+            }
+
+            return "";
+        }
+
+        // =========================
+        // FIND LOGIN ARTWORK
+        // =========================
+
+        private string FindAssetByPrefix(string prefix)
+        {
+            string current = Application.StartupPath;
+
+            for (int i = 0; i < 6; i++)
+            {
+                string assetsFolder = Path.Combine(
+                    current,
+                    "Assets"
+                );
+
+                if (Directory.Exists(assetsFolder))
+                {
+                    string[] files = Directory.GetFiles(
+                        assetsFolder
+                    );
+
+                    foreach (string file in files)
+                    {
+                        string fileName = Path.GetFileName(file);
+
+                        if (fileName.StartsWith(
+                            prefix,
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            return file;
+                        }
+                    }
+                }
+
+                DirectoryInfo? parent = Directory.GetParent(current);
+
+                if (parent == null)
+                    break;
+
+                current = parent.FullName;
+            }
+
+            return "";
+        }
+
+        // =========================
+        // LOGIN
+        // =========================
 
         private void BtnLogin_Click(object? sender, EventArgs e)
         {
-            string email = txtEmail.Text == EmailPlaceholder ? "" : txtEmail.Text.Trim();
-            string password = txtPassword.Text == PasswordPlaceholder ? "" : txtPassword.Text;
+            string email =
+                txtEmail.Text == EmailPlaceholder
+                    ? ""
+                    : txtEmail.Text.Trim();
 
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            string password =
+                txtPassword.Text == PasswordPlaceholder
+                    ? ""
+                    : txtPassword.Text;
+
+            if (string.IsNullOrEmpty(email) ||
+                string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Please enter both email and password.", "Login Failed",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    "Please enter both email and password.",
+                    "Login Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
                 return;
             }
 
-            // Authenticate against the users table (admin@drivehub.com / admin123 is seeded).
-            (bool ok, string message) = Database.ValidateLogin(email, password);
+            (bool ok, string message) =
+                Database.ValidateLogin(
+                    email,
+                    password
+                );
 
             if (ok)
             {
-                DashboardForm dashboard = new DashboardForm();
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    Database.CurrentUserName = message;
+                }
+
+                DashboardForm dashboard =
+                    new DashboardForm();
+
                 dashboard.Show();
-                this.Hide();
+
+                Hide();
             }
             else
             {
-                MessageBox.Show(message,
-                    "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    message,
+                    "Login Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
 
-        private void LnkRegister_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+        // =========================
+        // REGISTER
+        // =========================
+
+        private void LnkRegister_LinkClicked(
+            object? sender,
+            LinkLabelLinkClickedEventArgs e)
         {
-            RegisterForm registerForm = new RegisterForm();
-            registerForm.FormClosed += (s, args) => this.Show();
+            RegisterForm registerForm =
+                new RegisterForm();
+
+            registerForm.FormClosed += (s, args) =>
+            {
+                Show();
+            };
+
             registerForm.Show();
-            this.Hide();
+
+            Hide();
         }
 
-        private void LnkForgotPassword_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+        // =========================
+        // FORGOT PASSWORD
+        // =========================
+
+        private void LnkForgotPassword_LinkClicked(
+            object? sender,
+            LinkLabelLinkClickedEventArgs e)
         {
-            ForgotPasswordForm forgotForm = new ForgotPasswordForm();
-            forgotForm.FormClosed += (s, args) => this.Show();
+            ForgotPasswordForm forgotForm =
+                new ForgotPasswordForm();
+
+            forgotForm.FormClosed += (s, args) =>
+            {
+                Show();
+            };
+
             forgotForm.Show();
-            this.Hide();
+
+            Hide();
         }
     }
 }

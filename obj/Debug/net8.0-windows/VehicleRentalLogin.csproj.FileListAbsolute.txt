@@ -12,23 +12,16 @@ C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\refint\Vehicl
 C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.pdb
 C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\VehicleRentalLogin.genruntimeconfig.cache
 C:\Users\Admin\Desktop\VehicleRentalLogin\obj\Debug\net8.0-windows\ref\VehicleRentalLogin.dll
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfoInputs.cache
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfo.cs
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.csproj.CoreCompileInputs.cache
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.sourcelink.json
 C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\VehicleRentalLogin.exe
-C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\VehicleRentalLogin.deps.json
-C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\VehicleRentalLogin.runtimeconfig.json
 C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\VehicleRentalLogin.dll
 C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\VehicleRentalLogin.pdb
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.dll
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\refint\VehicleRentalLogin.dll
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.pdb
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.genruntimeconfig.cache
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\ref\VehicleRentalLogin.dll
-C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
-C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
-C:\Users\RENE\Downloads\clone ng github\wow\bin\Debug\net8.0-windows\MySqlConnector.dll
 C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.csproj.AssemblyReference.cache
-C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleR.E557FA08.Up2Date
+C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfoInputs.cache
+C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.AssemblyInfo.cs
+C:\Users\RENE\Downloads\clone ng github\wow\obj\Debug\net8.0-windows\VehicleRentalLogin.csproj.CoreCompileInputs.cache

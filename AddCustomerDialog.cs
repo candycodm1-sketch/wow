@@ -6,39 +6,47 @@ namespace VehicleRentalLogin
 {
     public class AddCustomerDialog : Form
     {
+        private bool isEditMode = false;
+
         private TextBox txtCustomerId = null!;
         private TextBox txtCustomerName = null!;
+        private TextBox txtEmail = null!;
         private TextBox txtContactNumber = null!;
         private TextBox txtAddress = null!;
 
         public string CustomerId => txtCustomerId.Text.Trim();
         public string CustomerName => txtCustomerName.Text.Trim();
+        public string Email => txtEmail.Text.Trim();
         public string ContactNumber => txtContactNumber.Text.Trim();
         public string Address => txtAddress.Text.Trim();
 
         public AddCustomerDialog()
         {
+            isEditMode = false;
             InitializeForm();
         }
 
         public AddCustomerDialog(
             string customerId,
             string customerName,
+            string email,
             string contactNumber,
             string address)
         {
+            isEditMode = true;
             InitializeForm();
 
             txtCustomerId.Text = customerId;
             txtCustomerName.Text = customerName;
+            txtEmail.Text = email;
             txtContactNumber.Text = contactNumber;
             txtAddress.Text = address;
         }
 
         private void InitializeForm()
         {
-            this.Text = "Add Customer";
-            this.Size = new Size(400, 440);
+            this.Text = isEditMode ? "Edit Customer" : "Add Customer";
+            this.Size = new Size(400, 500);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -47,7 +55,7 @@ namespace VehicleRentalLogin
 
             Label lblTitle = new Label
             {
-                Text = "Customer Information",
+                Text = isEditMode ? "Edit Customer" : "Customer Information",
                 Font = new Font("Segoe UI", 13F, FontStyle.Bold),
                 AutoSize = true,
                 Location = new Point(25, 20)
@@ -70,7 +78,13 @@ namespace VehicleRentalLogin
                 Location = new Point(25, y + 22),
                 Size = new Size(330, 26),
                 BorderStyle = BorderStyle.FixedSingle,
-                Text = $"CUS-{new Random().Next(1000, 9999)}"
+                Text = isEditMode
+                    ? ""
+                    : $"CUS-{new Random().Next(1000, 9999)}",
+                ReadOnly = isEditMode,
+                BackColor = isEditMode
+                    ? Color.FromArgb(245, 245, 248)
+                    : Color.White
             };
             this.Controls.Add(txtCustomerId);
 
@@ -92,6 +106,25 @@ namespace VehicleRentalLogin
                 BorderStyle = BorderStyle.FixedSingle
             };
             this.Controls.Add(txtCustomerName);
+
+            y += 60;
+
+            Label lblEmail = new Label
+            {
+                Text = "Email",
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(25, y)
+            };
+            this.Controls.Add(lblEmail);
+
+            txtEmail = new TextBox
+            {
+                Location = new Point(25, y + 22),
+                Size = new Size(330, 26),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(txtEmail);
 
             y += 60;
 
@@ -150,7 +183,7 @@ namespace VehicleRentalLogin
 
             Button btnSave = new Button
             {
-                Text = "Save Customer",
+                Text = isEditMode ? "Update Customer" : "Save Customer",
                 Size = new Size(180, 36),
                 Location = new Point(185, y),
                 ForeColor = Color.White,
@@ -171,12 +204,24 @@ namespace VehicleRentalLogin
         {
             if (string.IsNullOrWhiteSpace(txtCustomerId.Text) ||
                 string.IsNullOrWhiteSpace(txtCustomerName.Text) ||
+                string.IsNullOrWhiteSpace(txtEmail.Text) ||
                 string.IsNullOrWhiteSpace(txtContactNumber.Text) ||
                 string.IsNullOrWhiteSpace(txtAddress.Text))
             {
                 MessageBox.Show(
                     "Please fill in all fields.",
                     "Missing Information",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            if (!txtEmail.Text.Contains("@") || !txtEmail.Text.Contains("."))
+            {
+                MessageBox.Show(
+                    "Please enter a valid email address.",
+                    "Invalid Email",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 

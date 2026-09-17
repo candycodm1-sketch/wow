@@ -6,7 +6,8 @@ namespace VehicleRentalLogin
 {
     public class RegisterForm : Form
     {
-        private TextBox txtFullName = null!;
+        private TextBox txtFirstName = null!;
+        private TextBox txtLastName = null!;
         private TextBox txtEmail = null!;
         private TextBox txtPassword = null!;
         private TextBox txtConfirmPassword = null!;
@@ -21,7 +22,7 @@ namespace VehicleRentalLogin
         private void InitializeForm()
         {
             this.Text = "Vehicle Rental & Booking System - Register";
-            this.Size = new Size(900, 560);
+            this.Size = new Size(900, 620);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -91,8 +92,12 @@ namespace VehicleRentalLogin
 
             int y = 105;
 
-            AddFieldLabel(rightPanel, "Full Name", y);
-            txtFullName = AddTextBox(rightPanel, "Enter your full name", y + 25);
+            AddFieldLabel(rightPanel, "First Name", y);
+            txtFirstName = AddTextBox(rightPanel, "Enter your first name", y + 25);
+            y += 70;
+
+            AddFieldLabel(rightPanel, "Last Name", y);
+            txtLastName = AddTextBox(rightPanel, "Enter your last name", y + 25);
             y += 70;
 
             AddFieldLabel(rightPanel, "Email", y);
@@ -187,12 +192,14 @@ namespace VehicleRentalLogin
 
         private void BtnRegister_Click(object? sender, EventArgs e)
         {
-            string fullName = IsPlaceholder(txtFullName, "Enter your full name") ? "" : txtFullName.Text.Trim();
+            string firstName = IsPlaceholder(txtFirstName, "Enter your first name") ? "" : txtFirstName.Text.Trim();
+            string lastName = IsPlaceholder(txtLastName, "Enter your last name") ? "" : txtLastName.Text.Trim();
             string email = IsPlaceholder(txtEmail, "Enter your email") ? "" : txtEmail.Text.Trim();
             string password = IsPlaceholder(txtPassword, "Enter your password") ? "" : txtPassword.Text;
             string confirmPassword = IsPlaceholder(txtConfirmPassword, "Re-enter your password") ? "" : txtConfirmPassword.Text;
 
-            if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(email) ||
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName) ||
+                string.IsNullOrEmpty(email) ||
                 string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
             {
                 MessageBox.Show("Please fill in all fields.", "Registration Failed",
@@ -221,7 +228,7 @@ namespace VehicleRentalLogin
                 return;
             }
 
-            (bool ok, string message) = Database.RegisterUser(fullName, email, password);
+            (bool ok, string message) = Database.RegisterUser(firstName, lastName, email, password);
 
             if (!ok)
             {
@@ -229,6 +236,8 @@ namespace VehicleRentalLogin
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            string fullName = (firstName + " " + lastName).Trim();
 
             MessageBox.Show($"Account created for {fullName}!\nYou can now log in.", "Registration Successful",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);

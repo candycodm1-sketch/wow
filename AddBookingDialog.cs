@@ -8,6 +8,7 @@ namespace VehicleRentalLogin
     {
         private TextBox txtBookingId = null!;
         private TextBox txtCustomerName = null!;
+        private TextBox txtEmail = null!;
         private TextBox txtContactNumber = null!;
         private TextBox txtAddress = null!;
         private TextBox txtVehicleName = null!;
@@ -16,11 +17,12 @@ namespace VehicleRentalLogin
 
         public string BookingId => txtBookingId.Text.Trim();
         public string CustomerName => txtCustomerName.Text.Trim();
+        public string Email => txtEmail.Text.Trim();
         public string ContactNumber => txtContactNumber.Text.Trim();
         public string Address => txtAddress.Text.Trim();
         public string VehicleName => txtVehicleName.Text.Trim();
-        public string FromDate => dtpFrom.Value.ToString("yyyy-MM-dd");
-        public string ToDate => dtpTo.Value.ToString("yyyy-MM-dd");
+        public string FromDate => dtpFrom.Value.ToString("yyyy-MM-dd HH:mm:ss");
+        public string ToDate => dtpTo.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
         public AddBookingDialog()
         {
@@ -30,7 +32,7 @@ namespace VehicleRentalLogin
         private void InitializeForm()
         {
             this.Text = "Add Booking";
-            this.Size = new Size(400, 560);
+            this.Size = new Size(400, 640);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -60,6 +62,12 @@ namespace VehicleRentalLogin
             this.Controls.Add(txtCustomerName);
             y += 60;
 
+            Label lblEmail = new Label { Text = "Email", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
+            this.Controls.Add(lblEmail);
+            txtEmail = new TextBox { Location = new Point(25, y + 22), Size = new Size(330, 26), BorderStyle = BorderStyle.FixedSingle };
+            this.Controls.Add(txtEmail);
+            y += 60;
+
             Label lblContact = new Label { Text = "Contact Number", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
             this.Controls.Add(lblContact);
             txtContactNumber = new TextBox { Location = new Point(25, y + 22), Size = new Size(330, 26), BorderStyle = BorderStyle.FixedSingle };
@@ -78,16 +86,44 @@ namespace VehicleRentalLogin
             this.Controls.Add(txtVehicleName);
             y += 60;
 
-            Label lblFrom = new Label { Text = "From", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
+            Label lblFrom = new Label { Text = "From (start of rental)", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
             this.Controls.Add(lblFrom);
-            dtpFrom = new DateTimePicker { Location = new Point(25, y + 22), Size = new Size(155, 26), Format = DateTimePickerFormat.Short };
+            dtpFrom = new DateTimePicker
+            {
+                Location = new Point(25, y + 22),
+                Size = new Size(155, 26),
+                Format = DateTimePickerFormat.Custom,
+                CustomFormat = "MMM dd, yyyy  hh:mm tt"
+            };
             this.Controls.Add(dtpFrom);
 
-            Label lblTo = new Label { Text = "To", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(200, y) };
+            Label lblTo = new Label { Text = "To (end of rental)", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(200, y) };
             this.Controls.Add(lblTo);
-            dtpTo = new DateTimePicker { Location = new Point(200, y + 22), Size = new Size(155, 26), Format = DateTimePickerFormat.Short, Value = DateTime.Today.AddDays(1) };
+            dtpTo = new DateTimePicker
+            {
+                Location = new Point(200, y + 22),
+                Size = new Size(155, 26),
+                Format = DateTimePickerFormat.Custom,
+                CustomFormat = "MMM dd, yyyy  hh:mm tt",
+                Value = DateTime.Today.AddDays(1)
+            };
             this.Controls.Add(dtpTo);
             y += 65;
+
+            Label lblProcessed = new Label { Text = "Processed By", Font = new Font("Segoe UI", 9F, FontStyle.Bold), AutoSize = true, Location = new Point(25, y) };
+            this.Controls.Add(lblProcessed);
+            TextBox txtProcessedBy = new TextBox
+            {
+                Text = Database.CurrentUserName,
+                ReadOnly = true,
+                BackColor = Color.FromArgb(245, 245, 248),
+                ForeColor = Color.FromArgb(80, 80, 90),
+                Location = new Point(25, y + 22),
+                Size = new Size(330, 26),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(txtProcessedBy);
+            y += 62;
 
             Button btnCancel = new Button
             {
@@ -127,9 +163,9 @@ namespace VehicleRentalLogin
                 return;
             }
 
-            if (dtpTo.Value.Date < dtpFrom.Value.Date)
+            if (dtpTo.Value < dtpFrom.Value)
             {
-                MessageBox.Show("The 'To' date cannot be before the 'From' date.", "Invalid Dates",
+                MessageBox.Show("The 'To' date/time cannot be before the 'From' date/time.", "Invalid Dates",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }

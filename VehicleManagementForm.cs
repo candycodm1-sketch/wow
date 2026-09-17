@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace VehicleRentalLogin
@@ -12,6 +13,9 @@ namespace VehicleRentalLogin
         private int currentPage = 1;
         private int totalPages = 2;
 
+        private readonly Color PrimaryBlue = Color.FromArgb(48, 73, 181);
+        private readonly Color SidebarActive = Color.FromArgb(235, 238, 250);
+
         public VehicleManagementForm()
         {
             InitializeForm();
@@ -22,99 +26,224 @@ namespace VehicleRentalLogin
             this.Text = "DriveHub - Vehicle Management";
             this.Size = new Size(1100, 650);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.MinimumSize = new Size(900, 550);
+            this.MinimumSize = new Size(1000, 550);
             this.BackColor = Color.FromArgb(245, 246, 248);
+
+            // =========================
+            // SIDEBAR - SAME AS DASHBOARD
+            // =========================
 
             Panel sidebar = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 210,
+                Width = 270,
                 BackColor = Color.White
             };
 
             this.Controls.Add(sidebar);
 
-            Label lblLogo = new Label
+            // =========================
+            // DRIVEHUB LOGO
+            // =========================
+
+            PictureBox logoIcon = CreateAssetPicture(
+                "vehicle logo.png",
+                new Size(40, 40)
+            );
+
+            logoIcon.Location = new Point(13, 21);
+            logoIcon.SizeMode = PictureBoxSizeMode.Zoom;
+            logoIcon.BackColor = Color.Transparent;
+
+            sidebar.Controls.Add(logoIcon);
+
+            // =========================
+            // DRIVEHUB TEXT
+            // =========================
+
+            Panel driveHubPanel = new Panel
             {
-                Text = "🚗 DriveHub",
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 20)
+                Location = new Point(63, 20),
+                Size = new Size(180, 25),
+                BackColor = Color.Transparent
             };
 
-            sidebar.Controls.Add(lblLogo);
+            driveHubPanel.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode =
+                    System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                using Font font = new Font(
+                    "Segoe UI",
+                    12F,
+                    FontStyle.Bold
+                );
+
+                using SolidBrush driveBrush =
+                    new SolidBrush(Color.Black);
+
+                using SolidBrush hubBrush =
+                    new SolidBrush(PrimaryBlue);
+
+                string driveText = "Drive";
+                string hubText = "Hub";
+
+                SizeF driveSize =
+                    e.Graphics.MeasureString(
+                        driveText,
+                        font
+                    );
+
+                e.Graphics.DrawString(
+                    driveText,
+                    font,
+                    driveBrush,
+                    0,
+                    0
+                );
+
+                e.Graphics.DrawString(
+                    hubText,
+                    font,
+                    hubBrush,
+                    driveSize.Width - 1,
+                    0
+                );
+            };
+
+            sidebar.Controls.Add(driveHubPanel);
+
+            // =========================
+            // VEHICLE RENTAL SYSTEM
+            // =========================
 
             Label lblLogoSub = new Label
             {
                 Text = "Vehicle Rental System",
-                Font = new Font("Segoe UI", 8F),
+                Font = new Font(
+                    "Segoe UI",
+                    8F
+                ),
                 ForeColor = Color.Gray,
                 AutoSize = true,
-                Location = new Point(20, 45)
+                Location = new Point(63, 48),
+                BackColor = Color.Transparent
             };
 
             sidebar.Controls.Add(lblLogoSub);
 
-            string[] navItems =
-            {
+            // =========================
+            // DASHBOARD
+            // =========================
+
+            AddNavigationItem(
+                sidebar,
                 "Dashboard",
+                "dashboard logo for sidebar.png",
+                112,
+                false
+            );
+
+            // =========================
+            // VEHICLES - ACTIVE
+            // =========================
+
+            AddNavigationItem(
+                sidebar,
                 "Vehicles",
+                "vehicles logo for sidebar.png",
+                184,
+                true
+            );
+
+            // =========================
+            // BOOKINGS
+            // =========================
+
+            AddNavigationItem(
+                sidebar,
                 "Bookings",
+                "bookings logo for sidebar.png",
+                256,
+                false
+            );
+
+            // =========================
+            // CUSTOMERS
+            // =========================
+
+            AddNavigationItem(
+                sidebar,
                 "Customers",
-                "Reports"
+                "customer logo for sidebar.png",
+                328,
+                false
+            );
+
+            // =========================
+            // REPORTS
+            // =========================
+
+            AddNavigationItem(
+                sidebar,
+                "Reports",
+                "reports logo for sidebar.png",
+                400,
+                false
+            );
+
+            // =========================
+            // LOGOUT
+            // =========================
+
+            Panel logoutPanel = new Panel
+            {
+                Location = new Point(9, 472),
+                Size = new Size(233, 45),
+                BackColor = Color.White,
+                Cursor = Cursors.Hand,
+                Tag = "Logout"
             };
 
-            int navY = 90;
+            PictureBox logoutIcon = CreateAssetPicture(
+                "logout logo for sidebar.png",
+                new Size(32, 32)
+            );
 
-            foreach (string item in navItems)
+            logoutIcon.Location = new Point(15, 6);
+            logoutIcon.SizeMode = PictureBoxSizeMode.Zoom;
+            logoutIcon.Cursor = Cursors.Hand;
+            logoutIcon.Tag = "Logout";
+
+            Label logoutText = new Label
             {
-                bool isActive = item == "Vehicles";
-
-                Label navLabel = new Label
-                {
-                    Text = "  " + item,
-                    Font = new Font(
-                        "Segoe UI",
-                        10F,
-                        isActive
-                            ? FontStyle.Bold
-                            : FontStyle.Regular
-                    ),
-                    ForeColor = isActive
-                        ? Color.FromArgb(99, 60, 220)
-                        : Color.Black,
-                    BackColor = isActive
-                        ? Color.FromArgb(235, 230, 250)
-                        : Color.White,
-                    AutoSize = false,
-                    Size = new Size(190, 36),
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Location = new Point(10, navY),
-                    Cursor = Cursors.Hand,
-                    Tag = item
-                };
-
-                navLabel.Click += NavLabel_Click;
-                sidebar.Controls.Add(navLabel);
-
-                navY += 44;
-            }
-
-            LinkLabel lnkLogout = new LinkLabel
-            {
-                Text = "  Logout",
-                Font = new Font("Segoe UI", 10F),
-                LinkColor = Color.Red,
-                ActiveLinkColor = Color.DarkRed,
-                LinkBehavior = LinkBehavior.NeverUnderline,
+                Text = "Logout",
+                Font = new Font(
+                    "Segoe UI",
+                    10F
+                ),
+                ForeColor = Color.Red,
                 AutoSize = false,
-                Size = new Size(190, 36),
+                Size = new Size(140, 45),
+                Location = new Point(81, 0),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Location = new Point(10, navY + 20)
+                Cursor = Cursors.Hand,
+                BackColor = Color.Transparent,
+                Tag = "Logout"
             };
 
-            lnkLogout.LinkClicked += LnkLogout_LinkClicked;
-            sidebar.Controls.Add(lnkLogout);
+            logoutPanel.Controls.Add(logoutIcon);
+            logoutPanel.Controls.Add(logoutText);
+
+            logoutPanel.Click += Logout_Click;
+            logoutIcon.Click += Logout_Click;
+            logoutText.Click += Logout_Click;
+
+            sidebar.Controls.Add(logoutPanel);
+
+            // =========================
+            // MAIN CONTENT
+            // =========================
 
             Panel mainContent = new Panel
             {
@@ -129,7 +258,11 @@ namespace VehicleRentalLogin
             Label lblTitle = new Label
             {
                 Text = "Vehicle Management",
-                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                Font = new Font(
+                    "Segoe UI",
+                    16F,
+                    FontStyle.Bold
+                ),
                 AutoSize = true,
                 Location = new Point(30, 25)
             };
@@ -139,7 +272,11 @@ namespace VehicleRentalLogin
             Button btnAddVehicle = new Button
             {
                 Text = "+ Add Vehicle",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Font = new Font(
+                    "Segoe UI",
+                    9.5F,
+                    FontStyle.Bold
+                ),
                 ForeColor = Color.White,
                 BackColor = Color.FromArgb(50, 60, 200),
                 FlatStyle = FlatStyle.Flat,
@@ -156,7 +293,10 @@ namespace VehicleRentalLogin
             {
                 Text = "Search Vehicle...",
                 ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 9.5F),
+                Font = new Font(
+                    "Segoe UI",
+                    9.5F
+                ),
                 Location = new Point(30, 80),
                 Size = new Size(300, 28),
                 BorderStyle = BorderStyle.FixedSingle
@@ -196,7 +336,11 @@ namespace VehicleRentalLogin
             Label lblRecent = new Label
             {
                 Text = "Recent Vehicles",
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                Font = new Font(
+                    "Segoe UI",
+                    11F,
+                    FontStyle.Bold
+                ),
                 AutoSize = true,
                 Location = new Point(15, 12)
             };
@@ -206,9 +350,12 @@ namespace VehicleRentalLogin
             LinkLabel lnkViewAll = new LinkLabel
             {
                 Text = "View All",
-                Font = new Font("Segoe UI", 9F),
+                Font = new Font(
+                    "Segoe UI",
+                    9F
+                ),
                 AutoSize = true,
-                LinkColor = Color.FromArgb(99, 60, 220),
+                LinkColor = PrimaryBlue,
                 Location = new Point(850, 15)
             };
 
@@ -268,7 +415,11 @@ namespace VehicleRentalLogin
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.FromArgb(50, 60, 200),
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+                Font = new Font(
+                    "Segoe UI",
+                    9F,
+                    FontStyle.Bold
+                )
             };
 
             pagination.Controls.Add(lblPageCurrent);
@@ -298,6 +449,137 @@ namespace VehicleRentalLogin
             pagination.Controls.Add(btnNext);
         }
 
+        // =========================
+        // SIDEBAR ITEM
+        // =========================
+
+        private void AddNavigationItem(
+            Panel sidebar,
+            string title,
+            string iconFile,
+            int y,
+            bool active)
+        {
+            Panel itemPanel = new Panel
+            {
+                Location = new Point(9, y),
+                Size = new Size(233, 45),
+                BackColor = active
+                    ? SidebarActive
+                    : Color.White,
+                Cursor = Cursors.Hand,
+                Tag = title
+            };
+
+            PictureBox icon = CreateAssetPicture(
+                iconFile,
+                new Size(32, 32)
+            );
+
+            icon.Location = new Point(15, 6);
+            icon.SizeMode = PictureBoxSizeMode.Zoom;
+            icon.BackColor = Color.Transparent;
+            icon.Cursor = Cursors.Hand;
+            icon.Tag = title;
+
+            Label text = new Label
+            {
+                Text = title,
+                Font = new Font(
+                    "Segoe UI",
+                    10F,
+                    active
+                        ? FontStyle.Bold
+                        : FontStyle.Regular
+                ),
+                ForeColor = active
+                    ? PrimaryBlue
+                    : Color.Black,
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(145, 45),
+                Location = new Point(81, 0),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Cursor = Cursors.Hand,
+                Tag = title
+            };
+
+            itemPanel.Controls.Add(icon);
+            itemPanel.Controls.Add(text);
+
+            itemPanel.Click += NavLabel_Click;
+            icon.Click += NavLabel_Click;
+            text.Click += NavLabel_Click;
+
+            sidebar.Controls.Add(itemPanel);
+        }
+
+        // =========================
+        // IMAGE LOADER
+        // =========================
+
+        private PictureBox CreateAssetPicture(
+            string fileName,
+            Size size)
+        {
+            PictureBox pictureBox = new PictureBox
+            {
+                Size = size,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+
+            string path = FindAsset(fileName);
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                using Image original =
+                    Image.FromFile(path);
+
+                pictureBox.Image =
+                    new Bitmap(original);
+            }
+
+            return pictureBox;
+        }
+
+        private string FindAsset(string fileName)
+        {
+            string current =
+                Application.StartupPath;
+
+            for (int i = 0; i < 10; i++)
+            {
+                string path =
+                    Path.Combine(
+                        current,
+                        "Assets",
+                        fileName
+                    );
+
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+
+                DirectoryInfo? parent =
+                    Directory.GetParent(current);
+
+                if (parent == null)
+                {
+                    break;
+                }
+
+                current = parent.FullName;
+            }
+
+            return "";
+        }
+
+        // =========================
+        // VEHICLE DATA
+        // =========================
+
         private void RefreshVehicles()
         {
             vehicleList.Items.Clear();
@@ -314,8 +596,8 @@ namespace VehicleRentalLogin
             }
         }
 
-        /// <summary>Extracts the numeric part from display strings like "₱1,500/day".</summary>
-        private static decimal ParseDailyRate(string dailyRate)
+        private static decimal ParseDailyRate(
+            string dailyRate)
         {
             System.Text.StringBuilder sb =
                 new System.Text.StringBuilder();
@@ -326,7 +608,11 @@ namespace VehicleRentalLogin
                     sb.Append(c);
             }
 
-            decimal.TryParse(sb.ToString(), out decimal rate);
+            decimal.TryParse(
+                sb.ToString(),
+                out decimal rate
+            );
+
             return rate;
         }
 
@@ -337,31 +623,40 @@ namespace VehicleRentalLogin
             string dailyRate,
             string status)
         {
-            ListViewItem item = new ListViewItem(
-                new[]
-                {
-                    id,
-                    model,
-                    type,
-                    dailyRate,
-                    status,
-                    "Edit | Delete"
-                }
-            );
+            ListViewItem item =
+                new ListViewItem(
+                    new[]
+                    {
+                        id,
+                        model,
+                        type,
+                        dailyRate,
+                        status,
+                        "Edit | Delete"
+                    }
+                );
 
             vehicleList.Items.Add(item);
         }
+
+        // =========================
+        // SEARCH
+        // =========================
 
         private void TxtSearch_TextChanged(
             object? sender,
             EventArgs e)
         {
             string query =
-                txtSearch.Text == "Search Vehicle..."
+                txtSearch.Text ==
+                "Search Vehicle..."
                     ? ""
-                    : txtSearch.Text.Trim().ToLower();
+                    : txtSearch.Text
+                        .Trim()
+                        .ToLower();
 
-            foreach (ListViewItem item in vehicleList.Items)
+            foreach (ListViewItem item
+                     in vehicleList.Items)
             {
                 bool match =
                     string.IsNullOrEmpty(query) ||
@@ -382,6 +677,10 @@ namespace VehicleRentalLogin
             }
         }
 
+        // =========================
+        // ADD VEHICLE
+        // =========================
+
         private void BtnAddVehicle_Click(
             object? sender,
             EventArgs e)
@@ -389,15 +688,19 @@ namespace VehicleRentalLogin
             using AddVehicleDialog dialog =
                 new AddVehicleDialog();
 
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dialog.ShowDialog() ==
+                DialogResult.OK)
             {
-                (bool ok, string message) = Database.AddVehicle(
-                    dialog.VehicleId,
-                    dialog.Model,
-                    dialog.VehicleType,
-                    ParseDailyRate(dialog.DailyRate),
-                    "Available"
-                );
+                (bool ok, string message) =
+                    Database.AddVehicle(
+                        dialog.VehicleId,
+                        dialog.Model,
+                        dialog.VehicleType,
+                        ParseDailyRate(
+                            dialog.DailyRate
+                        ),
+                        "Available"
+                    );
 
                 if (ok)
                 {
@@ -424,12 +727,18 @@ namespace VehicleRentalLogin
 
         private const int ActionsColumnIndex = 5;
 
+        // =========================
+        // ACTION CURSOR
+        // =========================
+
         private void VehicleList_MouseMove(
             object? sender,
             MouseEventArgs e)
         {
             ListViewHitTestInfo hit =
-                vehicleList.HitTest(e.Location);
+                vehicleList.HitTest(
+                    e.Location
+                );
 
             bool overActions =
                 hit.Item != null &&
@@ -444,12 +753,18 @@ namespace VehicleRentalLogin
                     : Cursors.Default;
         }
 
+        // =========================
+        // ACTION CLICK
+        // =========================
+
         private void VehicleList_MouseClick(
             object? sender,
             MouseEventArgs e)
         {
             ListViewHitTestInfo hit =
-                vehicleList.HitTest(e.Location);
+                vehicleList.HitTest(
+                    e.Location
+                );
 
             if (hit.Item == null ||
                 hit.SubItem == null)
@@ -462,8 +777,11 @@ namespace VehicleRentalLogin
                     hit.SubItem
                 );
 
-            if (columnIndex != ActionsColumnIndex)
+            if (columnIndex !=
+                ActionsColumnIndex)
+            {
                 return;
+            }
 
             Rectangle bounds =
                 hit.SubItem.Bounds;
@@ -482,6 +800,10 @@ namespace VehicleRentalLogin
             }
         }
 
+        // =========================
+        // EDIT VEHICLE
+        // =========================
+
         private void EditVehicle(
             ListViewItem item)
         {
@@ -497,13 +819,16 @@ namespace VehicleRentalLogin
             if (dialog.ShowDialog() ==
                 DialogResult.OK)
             {
-                (bool ok, string message) = Database.UpdateVehicle(
-                    item.SubItems[0].Text,
-                    dialog.Model,
-                    dialog.VehicleType,
-                    ParseDailyRate(dialog.DailyRate),
-                    dialog.Status
-                );
+                (bool ok, string message) =
+                    Database.UpdateVehicle(
+                        item.SubItems[0].Text,
+                        dialog.Model,
+                        dialog.VehicleType,
+                        ParseDailyRate(
+                            dialog.DailyRate
+                        ),
+                        dialog.Status
+                    );
 
                 if (ok)
                 {
@@ -528,6 +853,10 @@ namespace VehicleRentalLogin
             }
         }
 
+        // =========================
+        // DELETE VEHICLE
+        // =========================
+
         private void DeleteVehicle(
             ListViewItem item)
         {
@@ -548,7 +877,10 @@ namespace VehicleRentalLogin
             if (confirm != DialogResult.Yes)
                 return;
 
-            (bool ok, string message) = Database.DeleteVehicle(vehicleId);
+            (bool ok, string message) =
+                Database.DeleteVehicle(
+                    vehicleId
+                );
 
             if (ok)
             {
@@ -572,6 +904,10 @@ namespace VehicleRentalLogin
             }
         }
 
+        // =========================
+        // DOUBLE CLICK
+        // =========================
+
         private void VehicleList_DoubleClick(
             object? sender,
             EventArgs e)
@@ -593,6 +929,10 @@ namespace VehicleRentalLogin
                 );
             }
         }
+
+        // =========================
+        // PAGINATION
+        // =========================
 
         private void ChangePage(
             int direction)
@@ -627,15 +967,19 @@ namespace VehicleRentalLogin
                 page.ToString();
         }
 
+        // =========================
+        // SIDEBAR NAVIGATION
+        // =========================
+
         private void NavLabel_Click(
             object? sender,
             EventArgs e)
         {
-            if (sender is not Label lbl)
+            if (sender is not Control control)
                 return;
 
             string target =
-                lbl.Tag?.ToString() ?? "";
+                control.Tag?.ToString() ?? "";
 
             switch (target)
             {
@@ -664,9 +1008,13 @@ namespace VehicleRentalLogin
             }
         }
 
-        private void LnkLogout_LinkClicked(
+        // =========================
+        // LOGOUT
+        // =========================
+
+        private void Logout_Click(
             object? sender,
-            LinkLabelLinkClickedEventArgs e)
+            EventArgs e)
         {
             DialogResult confirm =
                 MessageBox.Show(
@@ -676,19 +1024,27 @@ namespace VehicleRentalLogin
                     MessageBoxIcon.Question
                 );
 
-            if (confirm == DialogResult.Yes)
-            {
-                foreach (Form f in Application.OpenForms)
-                {
-                    if (f is Form1 loginForm)
-                    {
-                        loginForm.Show();
-                        break;
-                    }
-                }
+            if (confirm != DialogResult.Yes)
+                return;
 
-                this.Close();
+            foreach (Form form
+                     in Application.OpenForms)
+            {
+                if (form is Form1 loginForm)
+                {
+                    loginForm.Show();
+                    break;
+                }
             }
+
+            this.Close();
+        }
+
+        private void LnkLogout_LinkClicked(
+            object? sender,
+            LinkLabelLinkClickedEventArgs e)
+        {
+            Logout_Click(sender, e);
         }
     }
 }

@@ -32,6 +32,9 @@ namespace VehicleRentalLogin
         public static string LastError { get; private set; } = "";
         public static string LastErrorDetail { get; private set; } = "";
 
+        /// <summary>The display name of the user currently logged in. Used to record which admin processed a booking.</summary>
+        public static string CurrentUserName { get; set; } = "Administrator";
+
         private static string ServerConnectionString =>
             $"Server={DbServer};Port={DbPort};User ID={DbUser};Password={DbPassword};" +
             "CharSet=utf8mb4;ConnectionTimeout=5;";
@@ -82,6 +85,8 @@ namespace VehicleRentalLogin
                 Exec(conn,
                     "CREATE TABLE IF NOT EXISTS users (" +
                     " id INT AUTO_INCREMENT PRIMARY KEY," +
+                    " first_name VARCHAR(100) NOT NULL DEFAULT ''," +
+                    " last_name VARCHAR(100) NOT NULL DEFAULT ''," +
                     " full_name VARCHAR(100) NOT NULL," +
                     " email VARCHAR(150) NOT NULL UNIQUE," +
                     " password_hash VARCHAR(64) NOT NULL," +
@@ -91,6 +96,7 @@ namespace VehicleRentalLogin
                     "CREATE TABLE IF NOT EXISTS customers (" +
                     " customer_id VARCHAR(20) PRIMARY KEY," +
                     " name VARCHAR(100) NOT NULL," +
+                    " email VARCHAR(150) NOT NULL DEFAULT ''," +
                     " contact_number VARCHAR(30) NOT NULL," +
                     " address VARCHAR(255) NOT NULL)");
 
@@ -107,10 +113,28 @@ namespace VehicleRentalLogin
                     " booking_id VARCHAR(20) PRIMARY KEY," +
                     " customer_name VARCHAR(100) NOT NULL," +
                     " vehicle_name VARCHAR(100) NOT NULL," +
-                    " from_date DATE NOT NULL," +
-                    " to_date DATE NOT NULL," +
+                    " from_date DATETIME NOT NULL," +
+                    " to_date DATETIME NOT NULL," +
+                    " created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                     " status VARCHAR(20) NOT NULL DEFAULT 'Pending'," +
-                    " amount DECIMAL(10,2) NOT NULL DEFAULT 0)");
+                    " amount DECIMAL(10,2) NOT NULL DEFAULT 0," +
+                    " processed_by VARCHAR(100) NOT NULL DEFAULT '')");
+
+                // ---- migrations for databases created before these fields existed ----
+                Exec(conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(100) NOT NULL DEFAULT ''");
+                Exec(conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(100) NOT NULL DEFAULT ''");
+                Exec(conn, "ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(150) NOT NULL DEFAULT ''");
+                Exec(conn, "ALTER TABLE bookings MODIFY COLUMN from_date DATETIME NOT NULL");
+                Exec(conn, "ALTER TABLE bookings MODIFY COLUMN to_date DATETIME NOT NULL");
+                Exec(conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+                Exec(conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS processed_by VARCHAR(100) NOT NULL DEFAULT ''");
+
+                // Back-fill first / last name from the legacy full_name column
+                Exec(conn,
+                    "UPDATE users SET " +
+                    " first_name = TRIM(SUBSTRING_INDEX(full_name, ' ', 1)), " +
+                    " last_name = IF(LOCATE(' ', full_name) > 0, TRIM(SUBSTRING_INDEX(full_name, ' ', -1)), '') " +
+                    " WHERE first_name = '' AND full_name <> ''");
 
                 SeedAdmin(conn);
                 SeedVehicles(conn);
@@ -169,8 +193,10 @@ namespace VehicleRentalLogin
                 return;
 
             using MySqlCommand cmd = new MySqlCommand(
-                "INSERT INTO users (full_name, email, password_hash) " +
-                "VALUES (@name, @email, @hash)", conn);
+                "INSERT INTO users (first_name, last_name, full_name, email, password_hash) " +
+                "VALUES (@first, @last, @name, @email, @hash)", conn);
+            cmd.Parameters.AddWithValue("@first", "Administrator");
+            cmd.Parameters.AddWithValue("@last", "");
             cmd.Parameters.AddWithValue("@name", "Administrator");
             cmd.Parameters.AddWithValue("@email", "admin@drivehub.com");
             cmd.Parameters.AddWithValue("@hash", HashPassword("admin123"));
@@ -214,24 +240,25 @@ namespace VehicleRentalLogin
             if (Convert.ToInt32(check.ExecuteScalar()) > 0)
                 return;
 
-            (string Id, string Name, string Contact, string Address)[] rows =
+            (string Id, string Name, string Email, string Contact, string Address)[] rows =
             {
-                ("CUS-1001", "Juan Dela Cruz", "09171234567", "Santa Rosa, Laguna"),
-                ("CUS-1002", "Maria Santos", "09181234567", "Binan, Laguna"),
-                ("CUS-1003", "Pedro Reyes", "09201234567", "Calamba, Laguna"),
-                ("CUS-1004", "Ana Lopez", "09221234567", "Cabuyao, Laguna"),
-                ("CUS-1005", "Carlos Tan", "09351234567", "Tagaytay, Cavite")
+                ("CUS-1001", "Juan Dela Cruz", "juan.delacruz@email.com", "09171234567", "Santa Rosa, Laguna"),
+                ("CUS-1002", "Maria Santos", "maria.santos@email.com", "09181234567", "Binan, Laguna"),
+                ("CUS-1003", "Pedro Reyes", "pedro.reyes@email.com", "09201234567", "Calamba, Laguna"),
+                ("CUS-1004", "Ana Lopez", "ana.lopez@email.com", "09221234567", "Cabuyao, Laguna"),
+                ("CUS-1005", "Carlos Tan", "carlos.tan@email.com", "09351234567", "Tagaytay, Cavite")
             };
 
             using MySqlCommand cmd = new MySqlCommand(
-                "INSERT INTO customers (customer_id, name, contact_number, address) " +
-                "VALUES (@id, @name, @contact, @address)", conn);
+                "INSERT INTO customers (customer_id, name, email, contact_number, address) " +
+                "VALUES (@id, @name, @email, @contact, @address)", conn);
 
             foreach (var row in rows)
             {
                 cmd.Parameters.Clear();
                 cmd.Parameters.AddWithValue("@id", row.Id);
                 cmd.Parameters.AddWithValue("@name", row.Name);
+                cmd.Parameters.AddWithValue("@email", row.Email);
                 cmd.Parameters.AddWithValue("@contact", row.Contact);
                 cmd.Parameters.AddWithValue("@address", row.Address);
                 cmd.ExecuteNonQuery();
@@ -243,18 +270,18 @@ private static void SeedBookings(MySqlConnection conn)
             if (Convert.ToInt32(check.ExecuteScalar()) > 0)
                 return;
 
-            (string Id, string Customer, string Vehicle, string From, string To, string Status, decimal Amount)[] rows =
+            (string Id, string Customer, string Vehicle, string From, string To, string Status, decimal Amount, string CreatedAt, string ProcessedBy)[] rows =
             {
-                ("BK-1001", "Juan Dela Cruz", "Toyota Vios", "2026-08-10", "2026-08-12", "Completed", 3000),
-                ("BK-1002", "Maria Santos", "Honda CR-V", "2026-08-11", "2026-08-15", "Active", 10000),
-                ("BK-1003", "Pedro Reyes", "Ford Ranger", "2026-08-13", "2026-08-14", "Pending", 3000),
-                ("BK-1004", "Ana Lopez", "Mitsubishi Mirage", "2026-08-05", "2026-08-07", "Completed", 2400),
-                ("BK-1005", "Carlos Tan", "Hyundai Starex", "2026-08-14", "2026-08-20", "Cancelled", 21000)
+                ("BK-1001", "Juan Dela Cruz", "Toyota Vios", "2026-08-10 08:00:00", "2026-08-12 17:00:00", "Completed", 3000, "2026-08-01 09:30:00", "Administrator"),
+                ("BK-1002", "Maria Santos", "Honda CR-V", "2026-08-11 09:00:00", "2026-08-15 18:00:00", "Active", 10000, "2026-08-05 14:00:00", "Administrator"),
+                ("BK-1003", "Pedro Reyes", "Ford Ranger", "2026-08-13 07:00:00", "2026-08-14 19:00:00", "Pending", 3000, "2026-08-10 10:15:00", "Administrator"),
+                ("BK-1004", "Ana Lopez", "Mitsubishi Mirage", "2026-08-05 10:00:00", "2026-08-07 16:00:00", "Completed", 2400, "2026-07-28 11:00:00", "Administrator"),
+                ("BK-1005", "Carlos Tan", "Hyundai Starex", "2026-08-14 06:00:00", "2026-08-20 20:00:00", "Cancelled", 21000, "2026-08-02 09:00:00", "Administrator")
             };
 
             using MySqlCommand cmd = new MySqlCommand(
-                "INSERT INTO bookings (booking_id, customer_name, vehicle_name, from_date, to_date, status, amount) " +
-                "VALUES (@id, @customer, @vehicle, @from, @to, @status, @amount)", conn);
+                "INSERT INTO bookings (booking_id, customer_name, vehicle_name, from_date, to_date, status, amount, created_at, processed_by) " +
+                "VALUES (@id, @customer, @vehicle, @from, @to, @status, @amount, @created, @processed)", conn);
 
             foreach (var row in rows)
             {
@@ -262,10 +289,12 @@ private static void SeedBookings(MySqlConnection conn)
                 cmd.Parameters.AddWithValue("@id", row.Id);
                 cmd.Parameters.AddWithValue("@customer", row.Customer);
                 cmd.Parameters.AddWithValue("@vehicle", row.Vehicle);
-                cmd.Parameters.AddWithValue("@from", row.From);
-                cmd.Parameters.AddWithValue("@to", row.To);
+                cmd.Parameters.AddWithValue("@from", DateTime.Parse(row.From));
+                cmd.Parameters.AddWithValue("@to", DateTime.Parse(row.To));
                 cmd.Parameters.AddWithValue("@status", row.Status);
                 cmd.Parameters.AddWithValue("@amount", row.Amount);
+                cmd.Parameters.AddWithValue("@created", DateTime.Parse(row.CreatedAt));
+                cmd.Parameters.AddWithValue("@processed", row.ProcessedBy);
                 cmd.ExecuteNonQuery();
             }
         }
@@ -304,16 +333,20 @@ private static void SeedBookings(MySqlConnection conn)
             }
         }
 
-        public static (bool Ok, string Message) RegisterUser(string fullName, string email, string password)
+        public static (bool Ok, string Message) RegisterUser(string firstName, string lastName, string email, string password)
         {
+            string fullName = (firstName + " " + lastName).Trim();
+
             try
             {
                 using MySqlConnection conn = new MySqlConnection(ConnectionString);
                 conn.Open();
 
                 using MySqlCommand cmd = new MySqlCommand(
-                    "INSERT INTO users (full_name, email, password_hash) " +
-                    "VALUES (@name, @email, @hash)", conn);
+                    "INSERT INTO users (first_name, last_name, full_name, email, password_hash) " +
+                    "VALUES (@first, @last, @name, @email, @hash)", conn);
+                cmd.Parameters.AddWithValue("@first", firstName.Trim());
+                cmd.Parameters.AddWithValue("@last", lastName.Trim());
                 cmd.Parameters.AddWithValue("@name", fullName);
                 cmd.Parameters.AddWithValue("@email", email.Trim());
                 cmd.Parameters.AddWithValue("@hash", HashPassword(password));
@@ -384,7 +417,7 @@ private static void SeedBookings(MySqlConnection conn)
                 conn.Open();
 
                 string sql =
-                    "SELECT booking_id, customer_name, vehicle_name, from_date, to_date, status, amount " +
+                    "SELECT booking_id, customer_name, vehicle_name, from_date, to_date, status, amount, processed_by, created_at " +
                     "FROM bookings ORDER BY from_date DESC, booking_id DESC";
 
                 if (limit > 0)
@@ -400,10 +433,12 @@ private static void SeedBookings(MySqlConnection conn)
                         BookingId = reader.GetString(0),
                         CustomerName = reader.GetString(1),
                         VehicleName = reader.GetString(2),
-                        FromDate = reader.GetDateTime(3).ToString("yyyy-MM-dd"),
-                        ToDate = reader.GetDateTime(4).ToString("yyyy-MM-dd"),
+                        FromDate = reader.GetDateTime(3).ToString("MMM d, yyyy, h:mm tt"),
+                        ToDate = reader.GetDateTime(4).ToString("MMM d, yyyy, h:mm tt"),
                         Status = reader.GetString(5),
-                        Amount = reader.GetDecimal(6)
+                        Amount = reader.GetDecimal(6),
+                        ProcessedBy = reader.GetString(7),
+                        CreatedAt = reader.GetDateTime(8).ToString("MMM d, yyyy, h:mm tt")
                     });
                 }
 
@@ -453,7 +488,9 @@ private static void SeedBookings(MySqlConnection conn)
             string toDate,
             string status = "Pending",
             string contactNumber = "",
-            string address = "")
+            string address = "",
+            string email = "",
+            string processedBy = "")
         {
             try
             {
@@ -466,24 +503,27 @@ private static void SeedBookings(MySqlConnection conn)
                 int days = Math.Max(1, (to.Date - from.Date).Days);
                 decimal amount = days * GetDailyRate(vehicleName);
 
+                string processor = string.IsNullOrWhiteSpace(processedBy) ? CurrentUserName : processedBy;
+
                 using MySqlConnection conn = new MySqlConnection(ConnectionString);
                 conn.Open();
 
                 using MySqlCommand cmd = new MySqlCommand(
                     "INSERT INTO bookings " +
-                    "(booking_id, customer_name, vehicle_name, from_date, to_date, status, amount) " +
-                    "VALUES (@id, @customer, @vehicle, @from, @to, @status, @amount)", conn);
+                    "(booking_id, customer_name, vehicle_name, from_date, to_date, status, amount, created_at, processed_by) " +
+                    "VALUES (@id, @customer, @vehicle, @from, @to, @status, @amount, NOW(), @processed)", conn);
                 cmd.Parameters.AddWithValue("@id", bookingId);
                 cmd.Parameters.AddWithValue("@customer", customerName);
                 cmd.Parameters.AddWithValue("@vehicle", vehicleName);
-                cmd.Parameters.AddWithValue("@from", from.Date);
-                cmd.Parameters.AddWithValue("@to", to.Date);
+                cmd.Parameters.AddWithValue("@from", from);
+                cmd.Parameters.AddWithValue("@to", to);
                 cmd.Parameters.AddWithValue("@status", status);
                 cmd.Parameters.AddWithValue("@amount", amount);
+                cmd.Parameters.AddWithValue("@processed", processor);
                 cmd.ExecuteNonQuery();
 
                 // Auto-add customer if they don't already exist
-                AddCustomerIfNotExists(customerName, contactNumber, address);
+                AddCustomerIfNotExists(customerName, contactNumber, address, email);
 
                 IsAvailable = true;
                 return (true, "Booking added successfully.");
@@ -529,7 +569,7 @@ private static void SeedBookings(MySqlConnection conn)
         /// Automatically adds a customer if a customer with the same name doesn't already exist.
         /// Used when creating a booking to ensure the customer is in the Customers tab.
         /// </summary>
-        public static void AddCustomerIfNotExists(string customerName, string contactNumber = "", string address = "")
+        public static void AddCustomerIfNotExists(string customerName, string contactNumber = "", string address = "", string email = "")
         {
             try
             {
@@ -556,10 +596,11 @@ private static void SeedBookings(MySqlConnection conn)
 
                 // Insert the new customer
                 using MySqlCommand insertCmd = new MySqlCommand(
-                    "INSERT INTO customers (customer_id, name, contact_number, address) " +
-                    "VALUES (@id, @name, @contact, @address)", conn);
+                    "INSERT INTO customers (customer_id, name, email, contact_number, address) " +
+                    "VALUES (@id, @name, @email, @contact, @address)", conn);
                 insertCmd.Parameters.AddWithValue("@id", customerId);
                 insertCmd.Parameters.AddWithValue("@name", customerName);
+                insertCmd.Parameters.AddWithValue("@email", email);
                 insertCmd.Parameters.AddWithValue("@contact", string.IsNullOrWhiteSpace(contactNumber) ? "N/A" : contactNumber);
                 insertCmd.Parameters.AddWithValue("@address", string.IsNullOrWhiteSpace(address) ? "N/A" : address);
                 insertCmd.ExecuteNonQuery();
@@ -582,7 +623,7 @@ private static void SeedBookings(MySqlConnection conn)
                 conn.Open();
 
                 using MySqlCommand cmd = new MySqlCommand(
-                    "SELECT customer_id, name, contact_number, address " +
+                    "SELECT customer_id, name, email, contact_number, address " +
                     "FROM customers ORDER BY name", conn);
                 using MySqlDataReader reader = cmd.ExecuteReader();
 
@@ -592,8 +633,9 @@ private static void SeedBookings(MySqlConnection conn)
                     {
                         CustomerId = reader.GetString(0),
                         CustomerName = reader.GetString(1),
-                        ContactNumber = reader.GetString(2),
-                        Address = reader.GetString(3)
+                        Email = reader.GetString(2),
+                        ContactNumber = reader.GetString(3),
+                        Address = reader.GetString(4)
                     });
                 }
 
@@ -610,7 +652,7 @@ private static void SeedBookings(MySqlConnection conn)
         }
 
         public static (bool Ok, string Message) AddCustomer(
-            string customerId, string name, string contactNumber, string address)
+            string customerId, string name, string email, string contactNumber, string address)
         {
             try
             {
@@ -618,10 +660,11 @@ private static void SeedBookings(MySqlConnection conn)
                 conn.Open();
 
                 using MySqlCommand cmd = new MySqlCommand(
-                    "INSERT INTO customers (customer_id, name, contact_number, address) " +
-                    "VALUES (@id, @name, @contact, @address)", conn);
+                    "INSERT INTO customers (customer_id, name, email, contact_number, address) " +
+                    "VALUES (@id, @name, @email, @contact, @address)", conn);
                 cmd.Parameters.AddWithValue("@id", customerId);
                 cmd.Parameters.AddWithValue("@name", name);
+                cmd.Parameters.AddWithValue("@email", email);
                 cmd.Parameters.AddWithValue("@contact", contactNumber);
                 cmd.Parameters.AddWithValue("@address", address);
                 cmd.ExecuteNonQuery();
@@ -664,6 +707,139 @@ private static void SeedBookings(MySqlConnection conn)
                 LastError = ConnectionFailureMessage();
                 return (false, LastError);
             }
+        }
+
+        public static (bool Ok, string Message) UpdateCustomer(
+            string customerId, string name, string email, string contactNumber, string address)
+        {
+            try
+            {
+                using MySqlConnection conn = new MySqlConnection(ConnectionString);
+                conn.Open();
+
+                using MySqlCommand cmd = new MySqlCommand(
+                    "UPDATE customers SET name = @name, email = @email, contact_number = @contact, address = @address " +
+                    "WHERE customer_id = @id", conn);
+                cmd.Parameters.AddWithValue("@id", customerId);
+                cmd.Parameters.AddWithValue("@name", name);
+                cmd.Parameters.AddWithValue("@email", email);
+                cmd.Parameters.AddWithValue("@contact", contactNumber);
+                cmd.Parameters.AddWithValue("@address", address);
+                cmd.ExecuteNonQuery();
+
+                IsAvailable = true;
+                return (true, "Customer updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                IsAvailable = false;
+                LastErrorDetail = ex.Message;
+                LastError = ConnectionFailureMessage();
+                return (false, LastError);
+            }
+        }
+// ------------------------------------------------------ monthly report
+
+        /// <summary>Total revenue (bookings excluding Cancelled) that start in the given month.</summary>
+        public static decimal GetMonthlyIncome(int year, int month)
+        {
+            try
+            {
+                using MySqlConnection conn = new MySqlConnection(ConnectionString);
+                conn.Open();
+
+                using MySqlCommand cmd = new MySqlCommand(
+                    "SELECT COALESCE(SUM(amount), 0) FROM bookings " +
+                    "WHERE status <> 'Cancelled' AND YEAR(from_date) = @year AND MONTH(from_date) = @month", conn);
+                cmd.Parameters.AddWithValue("@year", year);
+                cmd.Parameters.AddWithValue("@month", month);
+
+                object? value = cmd.ExecuteScalar();
+                IsAvailable = true;
+                return Convert.ToDecimal(value);
+            }
+            catch
+            {
+                return 0m;
+            }
+        }
+
+        /// <summary>Number of bookings (excluding Cancelled) that start in the given month.</summary>
+        public static int GetMonthlyRentals(int year, int month)
+        {
+            try
+            {
+                using MySqlConnection conn = new MySqlConnection(ConnectionString);
+                conn.Open();
+
+                using MySqlCommand cmd = new MySqlCommand(
+                    "SELECT COUNT(*) FROM bookings " +
+                    "WHERE status <> 'Cancelled' AND YEAR(from_date) = @year AND MONTH(from_date) = @month", conn);
+                cmd.Parameters.AddWithValue("@year", year);
+                cmd.Parameters.AddWithValue("@month", month);
+
+                object? value = cmd.ExecuteScalar();
+                IsAvailable = true;
+                return Convert.ToInt32(value);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>Returns all bookings that start in the given month and year.</summary>
+        public static List<BookingRecord> GetMonthlyBookings(int year, int month)
+        {
+            List<BookingRecord> result = new List<BookingRecord>();
+
+            try
+            {
+                using MySqlConnection conn = new MySqlConnection(ConnectionString);
+                conn.Open();
+
+                string sql =
+                    "SELECT booking_id, customer_name, vehicle_name, from_date, to_date, status, amount, processed_by, created_at " +
+                    "FROM bookings " +
+                    "WHERE YEAR(from_date) = @year AND MONTH(from_date) = @month " +
+                    "ORDER BY from_date ASC, booking_id ASC";
+
+                using MySqlCommand cmd = new MySqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@year", year);
+                cmd.Parameters.AddWithValue("@month", month);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    result.Add(new BookingRecord
+                    {
+                        BookingId = reader.GetString(0),
+                        CustomerName = reader.GetString(1),
+                        VehicleName = reader.GetString(2),
+                        FromDate = reader.GetDateTime(3).ToString("MMM d, yyyy, h:mm tt"),
+                        ToDate = reader.GetDateTime(4).ToString("MMM d, yyyy, h:mm tt"),
+                        Status = reader.GetString(5),
+                        Amount = reader.GetDecimal(6),
+                        ProcessedBy = reader.GetString(7),
+                        CreatedAt = reader.GetDateTime(8).ToString("MMM d, yyyy, h:mm tt")
+                    });
+                }
+
+                IsAvailable = true;
+            }
+            catch
+            {
+                // Fallback to in-memory list if offline or query fails
+                foreach (var b in BookingData.Bookings)
+                {
+                    if (DateTime.TryParse(b.FromDate, out DateTime dt) && dt.Year == year && dt.Month == month)
+                    {
+                        result.Add(b);
+                    }
+                }
+            }
+
+            return result;
         }
 // ------------------------------------------------------ vehicles
 
